@@ -1,0 +1,6 @@
+# Extra KiCAD directories
+*-backups
+fp-info-cache
+
+# Photos aren't important (currently)
+*.JPG
