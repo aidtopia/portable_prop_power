@@ -279,18 +279,97 @@ module terminal_block_support(channels=4, panel_th=2, nozzle_d=0.4) {
     }
 }
 
+module Wago221_holder(conductors=3, nozzle_d=0.4) {
+    th = 2;
+    w =
+        (conductors == 2) ? 13.0 :
+        (conductors == 3) ? 18.6 :
+        (conductors == 5) ? 29.8 : 0;
+    lever_w =
+        (conductors == 2) ? 11.1 :
+        (conductors == 3) ? 17.3 :
+        (conductors == 5) ? 27.8 : 0;
+    tab_w = 8;
+    tab_lip = 2.5;
+    h = 18.2;
+    base_h = 3.5;
+    d = 8.2;
+    linear_extrude(th) square([w+2*th, d+2*th], center=true);
+    translate([0, 0, th]) {
+        difference() {
+            linear_extrude(h+tab_lip, convexity=8) {
+                difference() {
+                    square([w+2*th, d+2*th], center=true);
+                    square([w+nozzle_d/2, d+nozzle_d/2], center=true);
+                }
+            }
+            translate([0, -d/2, base_h]) {
+                linear_extrude(h+th, convexity=8) {
+                    square([lever_w, d], center=true);
+                }
+            }
+            translate([0, d/2, 2*base_h]) {
+                linear_extrude(h+th, convexity=8) {
+                    translate([-tab_w/2, 0])
+                        square([nozzle_d, 2*th+nozzle_d], center=true);
+                    translate([ tab_w/2, 0])
+                        square([nozzle_d, 2*th+nozzle_d], center=true);
+                }
+            } 
+        }
+        translate([0, (d+nozzle_d)/2, h+tab_lip]) rotate([-90, 0, 0]) rotate([0, 90, 0]) {
+            linear_extrude(tab_w-nozzle_d, center=true) {
+                polygon([[0, 0], [tab_lip, th/2], [0, th]]);
+            }
+        }
+    }
+}
+
+function Tobsun_buck_size() = [64, 53];
+
+module Tobsun_buck(nozzle_d=0.4) {
+    linear_extrude(2, convexity=8) {
+        translate([0, -7.5]) difference() {
+            hull() {
+                translate([-57/2, 0]) circle(d=7, $fs=nozzle_d/2);
+                translate([ 57/2, 0]) circle(d=7, $fs=nozzle_d/2);
+            }
+            translate([-57/2, 0]) circle(d=3, $fs=nozzle_d/2);
+            translate([ 57/2, 0]) circle(d=3, $fs=nozzle_d/2);
+        }
+        square([50, 53], center=true);
+    }
+    linear_extrude(20, convexity=8) {
+        translate([0, -7.5]) square([50, 38], center=true);
+    }
+}
+
+
+module power_footprint(w, h, r, nozzle_d=0.4) {
+    offset(r=r, $fs=nozzle_d/2) offset(r=-r) square([w, h]);
+}
+   
+
 module power_panel(
     panel_w=inch(5+1/8), panel_h=inch(3+1/2),
     panel_th=1.8,
     print_orientation=false,
     nozzle_d=0.4
 ) {
+    module footprint() {
+        power_footprint(panel_w, panel_h, 5, nozzle_d=nozzle_d);
+    }
+    
     module panel() {
-        translate([0, 0, -panel_th/2])
-            cube([panel_w, panel_h, panel_th]);
-        translate([panel_w/2, panel_h/2])
-            rectangular_brace([panel_w, panel_h], panel_th=panel_th, margin=-panel_th/2,
-                nozzle_d=nozzle_d);
+        linear_extrude(panel_th, center=true) footprint();
+        translate([0, 0, -panel_th]) {
+            linear_extrude(panel_th, center=true) {
+                difference() {
+                    offset(r=-panel_th-nozzle_d) footprint();
+                    offset(r=-2*panel_th) footprint();
+                }
+            }
+        }
     }
     
     module orient() {
@@ -303,10 +382,13 @@ module power_panel(
         }
     }
 
+    text_h = 6;
+    font = "Liberation Sans:style=bold";
     meter_size = metermod_size(panel_th);
     battery_meter_pos =
-        [panel_w/2, panel_h - (3*panel_th + meter_size.y/2)];
-    output1_meter_pos = [panel_w/4, panel_h/2 - 8];
+        [panel_w/2, panel_h - (6 + meter_size.y/2)];
+    output1_meter_pos =
+        [panel_w/4, battery_meter_pos.y - meter_size.y - 12];
     output2_meter_pos =
         [output1_meter_pos.x + panel_w/2, output1_meter_pos.y];
 
@@ -318,6 +400,14 @@ module power_panel(
     battery_button_pos =
         [battery_meter_pos.x + (meter_size.x + button_size.x)/2 + 2,
          battery_meter_pos.y];
+    battery_label_pos =
+        [battery_meter_pos.x,
+         battery_meter_pos.y - meter_size.y/2 - 1 - text_h];
+    output1_label_pos =
+        [output1_meter_pos.x,
+         output1_meter_pos.y - meter_size.y/2 - 1 - text_h];
+    output2_label_pos =
+        [output2_meter_pos.x, output1_label_pos.y];
     
     orient() {
         difference() {
@@ -345,16 +435,90 @@ module power_panel(
             translate(battery_button_pos)
                 plasticbtn_cutout(panel_th, nozzle_d);
 
-            linear_extrude(panel_th, convexity=10)
-                translate([output1_meter_pos.x - meter_size.x/2,
-                           output1_meter_pos.y - meter_size.y/2 - 5])
-                    text("Output 1", size=4);
-            linear_extrude(panel_th, convexity=10)
-                translate([output2_meter_pos.x - meter_size.x/2,
-                           output2_meter_pos.y - meter_size.y/2 - 5])
-                    text("Output 2", size=4);
+            translate([0, 0, panel_th/4]) {
+                linear_extrude(panel_th, convexity=10) {
+                    translate(battery_label_pos)
+                        text("BATTERY", text_h, font, halign="center");
+                    translate(output1_label_pos)
+                        text("OUTPUT 1", text_h, font, halign="center");
+                    translate(output2_label_pos)
+                        text("OUTPUT 2", text_h, font, halign="center");
+                }
+            }
         }
     }
 }
 
-power_panel(panel_th=1.8, print_orientation=!$preview);
+module power_base(
+    base_w=inch(5+1/8), base_h=inch(3+1/2), base_depth=inch(2),
+    base_th=1.8, wall_th=1.8,
+    print_orientation=false,
+    nozzle_d=0.4
+) {
+    module footprint() {
+        power_footprint(base_w, base_h, 5, nozzle_d=nozzle_d);
+    }
+    
+    linear_extrude(base_th) {
+        difference() {
+            footprint();
+            translate([inch(1/4), base_h/2]) {
+                translate([0, -15]) circle(d=3.5, $fs=nozzle_d/2);
+                translate([0,  15]) circle(d=3.5, $fs=nozzle_d/2);
+            }
+        }
+    }
+    linear_extrude(base_depth, convexity=8) {
+        difference() {
+            footprint();
+            offset(r=-wall_th) footprint();
+        }
+    }
+
+    buck_size = Tobsun_buck_size();
+    buck_pos =
+        [wall_th + buck_size.x/2 + nozzle_d,
+         wall_th + buck_size.y/2 + nozzle_d];
+
+    Wago5_x = buck_pos.x + buck_size.x/2 + 2*nozzle_d + 10;
+    Wago3_x = Wago5_x + 27;
+    Wago2_x = buck_pos.x + buck_size.x/2 + 2*nozzle_d + 1.4;
+
+    translate([0, 0, base_th]) {
+        if ($preview) {
+            color("gray")
+                translate(buck_pos)
+                    Tobsun_buck(nozzle_d=nozzle_d);
+        }
+        translate([Wago5_x, base_h-wall_th-6-2]) {
+            for (i = [0:1])
+                translate([0, -12.2*i]) {
+                    Wago221_holder(5, nozzle_d=nozzle_d);
+            }
+        }
+        translate([Wago3_x, base_h-wall_th-6-2]) {
+            for (i = [0:5]) {
+                translate([0, -12.2*i])
+                    Wago221_holder(3, nozzle_d=nozzle_d);
+            }
+        }
+        translate([Wago2_x, base_h-wall_th-6-2-2*12.2]) {
+            for (j=[0:1]) {
+                translate([0, -12.2*j]) {
+                    for (i=[0:1]) {
+                        if (j != 1 || i != 1) {
+                            translate([17.0*i, 0])
+                                Wago221_holder(2, nozzle_d=nozzle_d);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+if ($preview) {
+    translate([0, 0, inch(4)])
+        power_panel(panel_th=2.2, print_orientation=!$preview);
+}
+power_base(base_th=2.2, wall_th=2.2, base_depth=inch(1.2));
