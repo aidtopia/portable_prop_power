@@ -2,5 +2,8 @@
 *-backups
 fp-info-cache
 
+# Don't need outputs from OpenSCAD
+*.stl
+
 # Photos aren't important (currently)
 *.JPG
