@@ -126,7 +126,7 @@ function Wago221_holder_size(conductors=3, nozzle_d=0.4) =
         d = 8.2)
     [w+2*th, d+2*th];  // TODO: z component
 
-module Wago221_holder(conductors=3, nozzle_d=0.4) {
+module Wago221_holder(conductors=3, label="", nozzle_d=0.4) {
     th = 2;
     w =
         (conductors == 2) ? 13.0 :
@@ -162,12 +162,22 @@ module Wago221_holder(conductors=3, nozzle_d=0.4) {
                     translate([ tab_w/2, 0])
                         square([nozzle_d, 2*th+nozzle_d], center=true);
                 }
-            } 
+            }
         }
         translate([0, (d+nozzle_d)/2, h+tab_lip]) rotate([-90, 0, 0]) rotate([0, 90, 0]) {
             linear_extrude(tab_w-nozzle_d, center=true) {
                 polygon([[0, 0], [tab_lip, th/2], [0, th]]);
             }
+        }
+    }
+
+    if (len(label) > 0) {
+        font = "Liberation Sans:style=Bold";
+        size = 4;
+        linear_extrude(0.4) {
+            translate([0, -((d+2*th)/2 + size + nozzle_d)])
+                text(label, size, font, halign="center", valign="bottom",
+                     $fs=nozzle_d/2);
         }
     }
 }
@@ -208,10 +218,27 @@ module Tobsun_buck(nozzle_d=0.4) {
     }
 }
 
+module Tobsun_buck_supports(nozzle_d=0.4) {
+    font = "Liberation Sans:style=Bold";
+    linear_extrude(0.4, convexity=4) {
+        difference() {
+            square([50, 53], center=true);
+            offset(delta=-2*nozzle_d) square([50, 53], center=true);
+        }
+        translate([0, -7.5]) {
+            rotate([0, 0, 180])
+                text("TOBSUN", 5, font, halign="center", valign="center",
+                     spacing=1.05, $fs=nozzle_d/2);
+            translate([-57/2, 0]) circle(d=5.5, $fs=nozzle_d/2);
+            translate([ 57/2, 0]) circle(d=5.5, $fs=nozzle_d/2);
+        }
+    }
+}
+
 module Tobsun_buck_pilot_holes(nozzle_d=0.4) {
     dia = 2.5 + nozzle_d;  // tap size for M3
     translate([0, -7.5, -10]) {
-        linear_extrude(10.1, convexity=4) {
+        linear_extrude(10+1, convexity=4) {
             translate([-57/2, 0]) circle(d=dia, $fs=nozzle_d/2);
             translate([ 57/2, 0]) circle(d=dia, $fs=nozzle_d/2);
         }
@@ -242,11 +269,37 @@ module LM2596_buck(nozzle_d=0.4) {
 }
 
 module LM2596_buck_supports(nozzle_d=0.4) {
+    font = "Liberation Sans:style=Bold";
     dia = 5.5;
     linear_extrude(3, convexity=4) {
         dx = 30/2; dy= 15/2;
         translate([-dx,  dy]) circle(d=dia, $fs=nozzle_d/2);
         translate([ dx, -dy]) circle(d=dia, $fs=nozzle_d/2);
+    }
+    linear_extrude(0.4, convexity=6) {
+        text("LM2596", 5, font, halign="center", valign="top",
+             spacing=1.05, $fs=nozzle_d/2);
+        text("→", 16, font, halign="center", valign="bottom",
+             $fs=nozzle_d/2);
+        dx = LM2596_buck_size().x/2; dy = LM2596_buck_size().y/2;
+        translate([-dx, 0])
+            text("IN", 3, font, halign="right", valign="center",
+                 $fs=nozzle_d/2);
+        translate([ dx, 0])
+            text("OUT", 3, font, halign="left", valign="center",
+                 $fs=nozzle_d/2);
+        translate([-dx, -dy])
+            text("−", 3, font, halign="right", valign="bottom",
+                 $fs=nozzle_d/2);
+        translate([-dx,  dy])
+            text("+", 3, font, halign="right", valign="top",
+                 $fs=nozzle_d/2);
+        translate([ dx, -dy])
+            text("−", 3, font, halign="left", valign="bottom",
+                 $fs=nozzle_d/2);
+        translate([ dx,  dy])
+            text("+", 3, font, halign="left", valign="top",
+                 $fs=nozzle_d/2);
     }
 }
 
@@ -529,7 +582,7 @@ module base(
     buck2_pos =
         [buck1_pos.x + (buck1_size.x + buck2_size.y)/2+2,
          buck1_pos.y];
-    buck2_rot = [0, 0, 90];
+    buck2_rot = [0, 0, -90];
 
     Wago2_size = Wago221_holder_size(2);
     Wago3_size = Wago221_holder_size(3);
@@ -570,8 +623,12 @@ module base(
                     }
                 }
             }
-            translate([0, 0, base_th]) translate(buck2_pos) rotate(buck2_rot)
-                LM2596_buck_supports(nozzle_d=nozzle_d);
+            translate([0, 0, base_th]) {
+                translate(buck1_pos) rotate(buck1_rot)
+                    Tobsun_buck_supports(nozzle_d=nozzle_d);
+                translate(buck2_pos) rotate(buck2_rot)
+                    LM2596_buck_supports(nozzle_d=nozzle_d);
+            }
         }
         translate([0, 0, -2.5]) {
             linear_extrude(inch(0.5), convexity=8) {
@@ -603,16 +660,20 @@ module base(
     }
     
     translate([0, 0, base_th]) {
-        translate(battery_pos_pos) rotate([0, 0, 0]) Wago221_holder(2);
-        translate(battery_neg_pos) rotate([0, 0, 0]) Wago221_holder(2);
-        translate(output1_pos_pos) rotate([0, 0,  90]) Wago221_holder(3);
-        translate(output2_pos_pos) rotate([0, 0, -90]) Wago221_holder(3);
+        translate(battery_pos_pos) Wago221_holder(2, "BATT+");
+        translate(battery_neg_pos) Wago221_holder(2, "BATT−");
+        translate(output1_pos_pos) rotate([0, 0,  90])
+            Wago221_holder(3, "OUT1+");
+        translate(output2_pos_pos) rotate([0, 0, -90])
+            Wago221_holder(3, "OUT2+");
 
-        translate(output1_neg_pos) rotate([0, 0, -90]) Wago221_holder(2);
-        translate(output2_neg_pos) rotate([0, 0,  90]) Wago221_holder(2);
+        translate(output1_neg_pos) rotate([0, 0, -90])
+            Wago221_holder(2, "OUT1−");
+        translate(output2_neg_pos) rotate([0, 0,  90])
+            Wago221_holder(2, "OUT2−");
 
-        translate(return_power_pos)   rotate([0, 0, 0]) Wago221_holder(3);
-        translate(switched_power_pos) rotate([0, 0, 0]) Wago221_holder(3);
+        translate(return_power_pos)   Wago221_holder(3, "RETURN");
+        translate(switched_power_pos) Wago221_holder(3, "SWPWR");
     }
 
     if (Show_Tobsun_Buck && $preview) {
@@ -643,4 +704,3 @@ if (Include_Control_Panel) {
     translate([0, 0, z])
         panel(panel_th=2.2, corner_r=Corner_Radius, print_orientation=!$preview);
 }
-
