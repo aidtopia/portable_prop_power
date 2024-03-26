@@ -51,7 +51,7 @@
 
 Include_Base = true;
 Include_Walls = true;
-Wall_Height = 64; // [20:80]
+Wall_Height = 64; // [5:70]
 Include_Control_Panel = true;
 Show_Tobsun_Buck = true;
 Show_LM2596_Buck = true;
@@ -400,6 +400,12 @@ module portable_prop_power_box(nozzle_d=0.4) {
     wall_h = Wall_Height;
     print_orientation = !$preview;
 
+    m3_head_d = 6 + nozzle_d;
+    m3_tap_d = 2.5;
+    m3_free_d = 3.4 + nozzle_d;
+    m3_head_h = 2.6;
+    lip_h = min(m3_head_h + panel_th, base_th-1);
+
     Wago2_size = Wago221_holder_size(2);
     Wago3_size = Wago221_holder_size(3);
     Wago5_size = Wago221_holder_size(5);
@@ -409,14 +415,38 @@ module portable_prop_power_box(nozzle_d=0.4) {
             square([box_w, box_h]);
     }
 
+    module corners(d) {
+        dx = box_w/2 - corner_r;
+        dy = box_h/2 - corner_r;
+        translate([box_w/2, box_h/2]) {
+            translate([-dx, -dy]) circle(d=d, $fs=nozzle_d/2);
+            translate([-dx,  dy]) circle(d=d, $fs=nozzle_d/2);
+            translate([ dx, -dy]) circle(d=d, $fs=nozzle_d/2);
+            translate([ dx,  dy]) circle(d=d, $fs=nozzle_d/2);
+        }
+    }
+
+    module support_footprint() {
+        corners(d=2*corner_r);
+    }
+    
+    module wall_footprint() {
+        difference() {
+            box_footprint();
+            offset(r=-wall_th) box_footprint();
+        }
+        support_footprint();
+    }
+
     module control_panel() {
         module panel() {
             linear_extrude(panel_th, center=true) box_footprint();
             translate([0, 0, -panel_th]) {
                 linear_extrude(panel_th, center=true) {
                     difference() {
-                        offset(r=-panel_th-nozzle_d) box_footprint();
-                        offset(r=-2*panel_th) box_footprint();
+                        offset(r=-(2.2+nozzle_d/2)) box_footprint();
+                        offset(r=-(2.2+nozzle_d/2)) offset(r=-2.2) box_footprint();
+                        offset(r=nozzle_d/2) support_footprint();
                     }
                 }
             }
@@ -514,16 +544,8 @@ module portable_prop_power_box(nozzle_d=0.4) {
                     }
                 }
                 // screw holes
-                translate([box_w/2, box_h/2, -2*panel_th]) {
-                    dx = box_w/2 - corner_r;
-                    dy = box_h/2 - corner_r;
-                    dia = 3.4 + nozzle_d;  // free fit for M3
-                    h=4*panel_th;
-                    translate([-dx, -dy]) cylinder(h=h, d=dia, $fs=nozzle_d/2);
-                    translate([-dx,  dy]) cylinder(h=h, d=dia, $fs=nozzle_d/2);
-                    translate([ dx, -dy]) cylinder(h=h, d=dia, $fs=nozzle_d/2);
-                    translate([ dx,  dy]) cylinder(h=h, d=dia, $fs=nozzle_d/2);
-                }
+                linear_extrude(panel_th+1, center=true) corners(3.4+nozzle_d);
+
                 translate(power_switch_pos)
                     rocker_cutout(panel_th, nozzle_d);
                 translate(fuse_pos)
@@ -536,6 +558,12 @@ module portable_prop_power_box(nozzle_d=0.4) {
                     metermod_cutout(panel_th, nozzle_d);
                 translate(button_pos)
                     plasticbtn_cutout(panel_th, nozzle_d);
+
+                translate([0, 0, -panel_th]) {
+                    linear_extrude(panel_th, convexity=4, center=true) {
+                        offset(r=nozzle_d/2) wall_footprint();
+                    }
+                }
 
                 translate([0, 0, panel_th/4]) {
                     linear_extrude(panel_th, convexity=10) {
@@ -563,35 +591,20 @@ module portable_prop_power_box(nozzle_d=0.4) {
         screw_d = 2.5;  // tap diameter for M3
 
         difference() {
-            union() {
-                linear_extrude(wall_h, convexity=4) {
-                    difference() {
-                        box_footprint();
-                        offset(r=-wall_th) box_footprint();
-                    }
-                }
-                translate([box_w/2, box_h/2, 0]) {
-                    linear_extrude(wall_h - wall_th, convexity=4) {
-                        translate([-dx, -dy]) circle(r=corner_r, $fs=nozzle_d/2);
-                        translate([-dx,  dy]) circle(r=corner_r, $fs=nozzle_d/2);
-                        translate([ dx, -dy]) circle(r=corner_r, $fs=nozzle_d/2);
-                        translate([ dx,  dy]) circle(r=corner_r, $fs=nozzle_d/2);
-                    }
-                }
-            }
-            translate([0, 0, base_th+pg7_nut_d/2+3]) {
-                translate([box_w/4, 0, 0]) pg7_gland();
-                translate([box_w/4+box_w/2, 0, 0]) pg7_gland();
-            }
-            translate([box_w/2, box_h/2, 0]) {
-                translate([0, 0, wall_h-screw_l]) {
-                    linear_extrude(screw_l+1, convexity=4) {
+            linear_extrude(wall_h, convexity=4) {
+                difference() {
+                    wall_footprint();
+                    translate([box_w/2, box_h/2]) {
                         translate([-dx, -dy]) circle(d=screw_d, $fs=nozzle_d/2);
                         translate([-dx,  dy]) circle(d=screw_d, $fs=nozzle_d/2);
                         translate([ dx, -dy]) circle(d=screw_d, $fs=nozzle_d/2);
                         translate([ dx,  dy]) circle(d=screw_d, $fs=nozzle_d/2);
                     }
                 }
+            }
+            translate([0, 0, base_th+pg7_nut_d/2+3]) {
+                translate([box_w/4, 0, 0]) pg7_gland();
+                translate([box_w/4+box_w/2, 0, 0]) pg7_gland();
             }
         }
     }
@@ -641,6 +654,11 @@ module portable_prop_power_box(nozzle_d=0.4) {
                         translate([0, -15]) rounded_hole(3.5, base_th);
                         translate([0,  15]) rounded_hole(3.5, base_th);
                     }
+                    translate([0, 0, lip_h]) {
+                        linear_extrude(base_th, convexity=8) {
+                            offset(r=nozzle_d/2) wall_footprint();
+                        }
+                    }
                 }
                 translate([0, 0, base_th]) {
                     translate(buck1_pos) rotate(buck1_rot)
@@ -669,6 +687,21 @@ module portable_prop_power_box(nozzle_d=0.4) {
                         Wago221_holder(3, "SWPWR");
                 }
             }
+
+            // Screw holes for attaching to the walls.
+            // We want recesses for the heads of the screws, but they
+            // face bottom-up which makes it challenging to print.  For
+            // slicing sanity, we leave one vertical layer of plastic
+            // bridging the tapped portion of the hole.  It should be
+            // easy to screw threw it.
+            layer_h = 0.3;  // assumed
+            translate([0, 0, -layer_h]) {
+                linear_extrude(m3_head_h, convexity=4) corners(m3_head_d);
+            }
+            translate([0, 0, m3_head_h]) {
+                linear_extrude(base_th+2, convexity=4) corners(m3_free_d);
+            }
+
             translate([0, 0, -2.5]) {
                 linear_extrude(inch(0.5), convexity=8) {
                     // Pilot holes for attaching Ridgid battery adapter plate.
@@ -710,9 +743,12 @@ module portable_prop_power_box(nozzle_d=0.4) {
     }
 
     if (Include_Base) base();
-    if (Include_Walls) walls();
+    if (Include_Walls) {
+        z = Include_Base ? lip_h : 0;
+        color("green") translate([0, 0, z]) walls();
+    }
     if (Include_Control_Panel) {
-        z = (Include_Base || Include_Walls) ? wall_h : 0;
+        z = (Include_Base || Include_Walls) ? lip_h + wall_h : 0;
         translate([0, 0, z]) control_panel();
     }
 }
