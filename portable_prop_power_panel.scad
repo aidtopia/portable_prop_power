@@ -1,6 +1,54 @@
 // Portable Prop Power
 // Adrian McCarthy 2024-03-14
 
+// This is a project box for a DC power supply that supplies two outputs
+// stepped down from a cordless tool battery.
+//
+// There are adapter plates available commercially for the batteries used
+// by the various tools lines, like Dewalt, Ridgid, Ryobi, and many others.
+// Depending on the brand, the battery packs nominally provide 18, 20, or
+// 24V, which are available in high capacity sizes, like 4 amp-hours.  The
+// packs include battery management circuitry, so we don't have to design
+// our own charger.
+// 
+// For a Halloween prop, you often need a high amperage supply (e.g., to
+// run a 12V wiper motor) and a lower voltage supply for the controller.
+//
+// The Portable Prop Power box is designed to attach to your cordless tool
+// battery pack via an adapter plate bolted to the underside of the box.
+// Inside, it houses two DC-DC step-down converters to provide the two
+// supplies.  On top is a "control panel" with a power switch, a fuse, and
+// three multimeter displays (one for the battery, and two for the outputs).
+// There's also a pushbutton so that the displays are on only when needed.
+//
+// The exact buck modules and battery adapter plate will vary based on each
+// haunters needs.  So those are attached to the "base" component, which
+// can be customized without changing the control panel.  It's currently
+// configured for a Ridgid battery adapter plate from Ecarke, a Tobsun
+// 24V to 12V DC-DC apapter capable of 10 amps, and a generic HW-411 buck
+// module based on an LM2596.  The base is quite thick to accommodate
+// 1/2-inch screws for attaching the adapter plate to the bottom.  In
+// practice, the base can be printed with a 0.3mm layer height ("Draft" in
+// Pruse Slicer).  To save plastic, I reduced the infill to 10% which still
+// seems sufficient.  
+//
+// The walls of the box are designed as a tube to which the base and control
+// panel can be attached with M3x10mm screws.  This allows most of the wiring
+// on the base and the back of the control panel to be completed without
+// inside a deep box, to keep the base component customizable, and for speed
+// of printing.  Two threaded openings for PG7 glands provide the outputs.
+// Although these glands are advertised as "waterproof", the box itself is not.
+// The wall unit can also be printed with 0.3mm layers ("Draft" in Prusa
+// Slicer).
+//
+// The control panel must be printed with 0.2mm layers ("Quality" in Prusa
+// Slicer) for good fit of the panel-mounted components.
+//
+// I used PETG, but PLA is probably fine as well.  The screw holes are
+// pilot holes intended for M3x10mm machine screws.  If you anticipate
+// opening and closing the box repeatedly, you might want to adjust the design
+// to use heat-set threaded inserts.
+
 Include_Base = true;
 Include_Box_Walls = true;
 Wall_Height = 64; // [20:80]
@@ -554,20 +602,17 @@ module base(
         box_footprint(box_w, box_h, corner_r, nozzle_d=nozzle_d);
     }
     
-    function grommet_d(d, th, nozzle_d=0.4) =
-        let(d0 = min(th, 3)) d + d0;        
-
     // A rounded hole for passing wires through without a sharp edge.
-    module grommet(d, th, nozzle_d=0.4) {
+    module rounded_hole(d, th, nozzle_d=0.4) {
         d0 = min(th, 3);
-        lift = (th - d0) / 2;
+        lift = (th - d0) / 2 - 0.1;
         rotate_extrude(convexity=4, $fs=nozzle_d/2) {
-            intersection() {
+            difference() {
+                translate([0, -(th+1)/2]) square([(d+d0)/2, th+1]);
                 translate([(d+d0)/2, 0]) hull() {
                     translate([0, -lift]) circle(d=d0, $fs=nozzle_d/2);
                     translate([0,  lift]) circle(d=d0, $fs=nozzle_d/2);
                 }
-                square([d+d0, th], center=true);
             }
         }
     }
@@ -612,15 +657,11 @@ module base(
 
     difference() {
         union() {
-            linear_extrude(base_th) {
-                difference() {
-                    footprint();
-                    // Wire entry for battery adapter.
-                    cut_d = grommet_d(3.5, base_th);
-                    translate([inch(1/4), box_h/2]) {
-                        translate([0, -15]) circle(d=cut_d, $fs=nozzle_d/2);
-                        translate([0,  15]) circle(d=cut_d, $fs=nozzle_d/2);
-                    }
+            difference() {
+                linear_extrude(base_th) footprint();
+                translate([inch(1/4), box_h/2, base_th/2]) {
+                    translate([0, -15]) rounded_hole(3.5, base_th);
+                    translate([0,  15]) rounded_hole(3.5, base_th);
                 }
             }
             translate([0, 0, base_th]) {
@@ -673,10 +714,6 @@ module base(
                 LM2596_buck_pilot_holes(nozzle_d=nozzle_d);
             }
         }
-    }
-    translate([inch(1/4), box_h/2, base_th/2]) {
-        translate([0, -15]) grommet(3.5, base_th, nozzle_d);
-        translate([0,  15]) grommet(3.5, base_th, nozzle_d);
     }
 
     if (Show_Tobsun_Buck && $preview) {
