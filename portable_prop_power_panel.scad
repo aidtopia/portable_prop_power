@@ -139,7 +139,7 @@ module Wago221_holder(conductors=3, label="", nozzle_d=0.4) {
     tab_w = 8;
     tab_lip = 2.5;
     h = 18.2;
-    base_h = 3.5;
+    box_h = 3.5;
     d = 8.2;
     linear_extrude(th) square([w+2*th, d+2*th], center=true);
     translate([0, 0, th]) {
@@ -150,12 +150,12 @@ module Wago221_holder(conductors=3, label="", nozzle_d=0.4) {
                     square([w+nozzle_d/2, d+nozzle_d/2], center=true);
                 }
             }
-            translate([0, -d/2, base_h]) {
+            translate([0, -d/2, box_h]) {
                 linear_extrude(h+th, convexity=8) {
                     square([lever_w, d], center=true);
                 }
             }
-            translate([0, d/2, 2*base_h]) {
+            translate([0, d/2, 2*box_h]) {
                 linear_extrude(h+th, convexity=8) {
                     translate([-tab_w/2, 0])
                         square([nozzle_d, 2*th+nozzle_d], center=true);
@@ -314,19 +314,19 @@ module LM2596_buck_pilot_holes(nozzle_d=0.4) {
     }
 }
 
-module power_footprint(w, h, r, nozzle_d=0.4) {
+module box_footprint(w, h, r, nozzle_d=0.4) {
     offset(r=r, $fs=nozzle_d/2) offset(r=-r) square([w, h]);
 }
 
 module panel(
-    panel_w=inch(5+1/8), panel_h=inch(3+1/2),
+    box_w=inch(5+1/8), box_h=inch(3+1/2),
     panel_th=1.8,
     print_orientation=false,
     corner_r=4,
     nozzle_d=0.4
 ) {
     module footprint() {
-        power_footprint(panel_w, panel_h, corner_r, nozzle_d=nozzle_d);
+        box_footprint(box_w, box_h, corner_r, nozzle_d=nozzle_d);
     }
     
     module panel() {
@@ -343,7 +343,7 @@ module panel(
     
     module orient() {
         if (print_orientation) {
-            translate([panel_w, 0, panel_th/2]) rotate([0, 180, 0]) {
+            translate([box_w, 0, panel_th/2]) rotate([0, 180, 0]) {
                 children();
             }
         } else {
@@ -362,8 +362,8 @@ module panel(
         [switch_size.x + 2 + fuse_size.x + 2 + meter_size.x + 2 + button_size.x,
          max(switch_size.y, fuse_size.y, meter_size.y, button_size.y)];
     row_offset =
-        [(panel_w - row_size.x) / 2,
-         panel_h - (6 + row_size.y/2)];
+        [(box_w - row_size.x) / 2,
+         box_h - (6 + row_size.y/2)];
 
     power_switch_pos =
         [row_offset.x + switch_size.x/2, row_offset.y];
@@ -381,9 +381,9 @@ module panel(
          battery_meter_pos.y - meter_size.y/2 - 1 - text_h];
 
     output1_meter_pos =
-        [panel_w/4 - 1, battery_meter_pos.y - meter_size.y - 19];
+        [box_w/4 - 1, battery_meter_pos.y - meter_size.y - 19];
     output2_meter_pos =
-        [output1_meter_pos.x + panel_w/2 + 2, output1_meter_pos.y];
+        [output1_meter_pos.x + box_w/2 + 2, output1_meter_pos.y];
     output1_label_pos =
         [output1_meter_pos.x,
          output1_meter_pos.y + (meter_size.y/2 + 1)];
@@ -395,7 +395,7 @@ module panel(
     Wago2_size = Wago221_holder_size(2);
     Wago3_size = Wago221_holder_size(3);
     Wago5_size = Wago221_holder_size(5);
-    switched_power_pos = [panel_w/2, panel_h/2 + 1];
+    switched_power_pos = [box_w/2, box_h/2 + 1];
     meter_power_pos    =
         [switched_power_pos.x + Wago5_size.x/2 + Wago2_size.x/2-2,
          switched_power_pos.y];
@@ -405,7 +405,7 @@ module panel(
     battery_pos_pos    =
         [battery_neg_pos.x - (Wago2_size.x - 2),
          battery_neg_pos.y];
-    return_power_pos   = [panel_w/2 - 1, output1_meter_pos.y];
+    return_power_pos   = [box_w/2 - 1, output1_meter_pos.y];
 
     orient() {
         difference() {
@@ -438,9 +438,9 @@ module panel(
                 }
             }
             // screw holes
-            translate([panel_w/2, panel_h/2, -2*panel_th]) {
-                dx = panel_w/2 - corner_r;
-                dy = panel_h/2 - corner_r;
+            translate([box_w/2, box_h/2, -2*panel_th]) {
+                dx = box_w/2 - corner_r;
+                dy = box_h/2 - corner_r;
                 dia = 3.4;  // free fit for M3
                 h=4*panel_th;
                 translate([-dx, -dy]) cylinder(h=h, d=dia, $fs=nozzle_d/2);
@@ -477,8 +477,8 @@ module panel(
 }
 
 module walls(
-    base_w=inch(5+1/8), base_h=inch(3+1/2), base_depth=inch(2),
-    base_th=1.8, wall_th=1.8,
+    box_w=inch(5+1/8), box_h=inch(3+1/2), base_depth=inch(2),
+    base_th=12, wall_th=1.8,
     print_orientation=false,
     corner_r=4,
     nozzle_d=0.4
@@ -488,7 +488,7 @@ module walls(
     pg7_nut_d = 20;
 
     module footprint() {
-        power_footprint(base_w, base_h, corner_r, nozzle_d=nozzle_d);
+        box_footprint(box_w, box_h, corner_r, nozzle_d=nozzle_d);
     }
     
     module gland() {
@@ -504,8 +504,8 @@ module walls(
         }
     }
 
-    dx = base_w/2 - corner_r;
-    dy = base_h/2 - corner_r;
+    dx = box_w/2 - corner_r;
+    dy = box_h/2 - corner_r;
     screw_l = 10;
     screw_d = 2.5;  // tap diameter for M3
 
@@ -517,7 +517,7 @@ module walls(
                     offset(r=-wall_th) footprint();
                 }
             }
-            translate([base_w/2, base_h/2, 0]) {
+            translate([box_w/2, box_h/2, 0]) {
                 linear_extrude(base_depth - wall_th, convexity=4) {
                     translate([-dx, -dy]) circle(r=corner_r, $fs=nozzle_d/2);
                     translate([-dx,  dy]) circle(r=corner_r, $fs=nozzle_d/2);
@@ -527,10 +527,10 @@ module walls(
             }
         }
         translate([0, 0, base_th+pg7_nut_d/2+3]) {
-            translate([base_w/4, 0, 0]) gland();
-            translate([base_w/4+base_w/2, 0, 0]) gland();
+            translate([box_w/4, 0, 0]) gland();
+            translate([box_w/4+box_w/2, 0, 0]) gland();
         }
-        translate([base_w/2, base_h/2, 0]) {
+        translate([box_w/2, box_h/2, 0]) {
             translate([0, 0, base_depth-screw_l]) {
                 linear_extrude(screw_l+1, convexity=4) {
                     translate([-dx, -dy]) circle(d=screw_d, $fs=nozzle_d/2);
@@ -544,14 +544,14 @@ module walls(
 }
 
 module base(
-    base_w=inch(5+1/8), base_h=inch(3+1/2), base_depth=inch(2),
-    base_th=1.8, wall_th=1.8,
+    box_w=inch(5+1/8), box_h=inch(3+1/2), base_depth=inch(2),
+    base_th=12, wall_th=1.8,
     print_orientation=false,
     corner_r=4,
     nozzle_d=0.4
 ) {
     module footprint() {
-        power_footprint(base_w, base_h, corner_r, nozzle_d=nozzle_d);
+        box_footprint(box_w, box_h, corner_r, nozzle_d=nozzle_d);
     }
     
     function grommet_d(d, th, nozzle_d=0.4) =
@@ -575,7 +575,7 @@ module base(
     buck1_size = Tobsun_buck_size();
     buck1_pos =
         [2*wall_th + buck1_size.x/2 + 13,
-         base_h - (2*wall_th + buck1_size.y/2)];
+         box_h - (2*wall_th + buck1_size.y/2)];
     buck1_rot = [0, 0, 180];
 
     buck2_size = LM2596_buck_size();
@@ -588,104 +588,95 @@ module base(
     Wago3_size = Wago221_holder_size(3);
     battery_pos_pos =
         [wall_th + Wago2_size.y/2 + 1,
-         base_h - (2*corner_r + Wago2_size.x/2 + nozzle_d)];
+         box_h - (2*corner_r + Wago2_size.x/2 + nozzle_d)];
     battery_neg_pos =
-        [battery_pos_pos.x, base_h/2];
+        [battery_pos_pos.x, box_h/2];
     output1_pos_pos = 
         [2*corner_r + Wago3_size.y/2 + nozzle_d,
          Wago3_size.x/2 + wall_th + nozzle_d, 0];
     output2_pos_pos = 
-        [base_w - output1_pos_pos.x,
+        [box_w - output1_pos_pos.x,
          output1_pos_pos.y];
     output1_neg_pos =
-        [base_w/2 - (Wago2_size.y/2 + 2),
+        [box_w/2 - (Wago2_size.y/2 + 2),
          Wago2_size.x/2 + wall_th + nozzle_d, 0];
     output2_neg_pos =
-        [base_w - output1_neg_pos.x,
+        [box_w - output1_neg_pos.x,
          output1_neg_pos.y];
     return_power_pos =
-        [base_w - (wall_th + Wago3_size.y/2 + 1),
-         base_h/2 + Wago3_size.x];
+        [box_w - (wall_th + Wago3_size.y/2 + 1),
+         box_h/2 + Wago3_size.x];
     switched_power_pos =
         [return_power_pos.x,
-         return_power_pos.y - (Wago3_size.x - 2)];
+         return_power_pos.y - Wago3_size.x];
 
     difference() {
         union() {
-            difference() {
-                union() {
-                    linear_extrude(base_th) {
-                        difference() {
-                            footprint();
-                            // Wire entry for battery adapter.
-                            cut_d = grommet_d(3.5, base_th);
-                            translate([inch(1/4), base_h/2]) {
-                                translate([0, -15]) circle(d=cut_d, $fs=nozzle_d/2);
-                                translate([0,  15]) circle(d=cut_d, $fs=nozzle_d/2);
-                            }
-                        }
-                    }
-                    translate([0, 0, base_th]) {
-                        translate(buck1_pos) rotate(buck1_rot)
-                            Tobsun_buck_supports(nozzle_d=nozzle_d);
-                        translate(buck2_pos) rotate(buck2_rot)
-                            LM2596_buck_supports(nozzle_d=nozzle_d);
-                    }
-                    translate([0, 0, base_th]) {
-                        translate(battery_pos_pos) rotate([0, 0, 90])
-                            Wago221_holder(2, "BATT+");
-                        translate(battery_neg_pos) rotate([0, 0, 90])
-                            Wago221_holder(2, "BATT−");
-                        translate(output1_pos_pos) rotate([0, 0,  90])
-                            Wago221_holder(3, "OUT1+");
-                        translate(output2_pos_pos) rotate([0, 0, -90])
-                            Wago221_holder(3, "OUT2+");
-
-                        translate(output1_neg_pos) rotate([0, 0, -90])
-                            Wago221_holder(2, "OUT1−");
-                        translate(output2_neg_pos) rotate([0, 0,  90])
-                            Wago221_holder(2, "OUT2−");
-
-                        translate(return_power_pos)   rotate([0, 0, -90])
-                            Wago221_holder(3, "RETURN");
-                        translate(switched_power_pos) rotate([0, 0, -90])
-                            Wago221_holder(3, "SWPWR");
-                    }
-                }
-                translate([0, 0, -2.5]) {
-                    linear_extrude(inch(0.5), convexity=8) {
-                        // Pilot holes for attaching Ridgid battery adapter plate.
-                        translate([base_w, base_h/2]) {
-                            d = 2.7;  // tap size for #6
-                            dy = 51.5 / 2;
-                            translate([-19, -dy]) circle(d=d, $fs=nozzle_d/2);
-                            translate([-19,  dy]) circle(d=d, $fs=nozzle_d/2);
-                            translate([-50, -dy]) circle(d=d, $fs=nozzle_d/2);
-                            translate([-50,  dy]) circle(d=d, $fs=nozzle_d/2);
-                            translate([-108, -dy]) circle(d=d, $fs=nozzle_d/2);
-                            translate([-108,  dy]) circle(d=d, $fs=nozzle_d/2);
-                        }
-                    }
-                }
-                translate([0, 0, base_th]) {
-                    translate(buck1_pos) rotate(buck1_rot) {
-                        Tobsun_buck_pilot_holes(nozzle_d=nozzle_d);
-                    }
-                    translate(buck2_pos) rotate(buck2_rot) {
-                        LM2596_buck_pilot_holes(nozzle_d=nozzle_d);
+            linear_extrude(base_th) {
+                difference() {
+                    footprint();
+                    // Wire entry for battery adapter.
+                    cut_d = grommet_d(3.5, base_th);
+                    translate([inch(1/4), box_h/2]) {
+                        translate([0, -15]) circle(d=cut_d, $fs=nozzle_d/2);
+                        translate([0,  15]) circle(d=cut_d, $fs=nozzle_d/2);
                     }
                 }
             }
-            translate([inch(1/4), base_h/2, base_th/2]) {
-                translate([0, -15]) grommet(3.5, base_th, nozzle_d);
-                translate([0,  15]) grommet(3.5, base_th, nozzle_d);
+            translate([0, 0, base_th]) {
+                translate(buck1_pos) rotate(buck1_rot)
+                    Tobsun_buck_supports(nozzle_d=nozzle_d);
+                translate(buck2_pos) rotate(buck2_rot)
+                    LM2596_buck_supports(nozzle_d=nozzle_d);
             }
-            
+            translate([0, 0, base_th]) {
+                translate(battery_pos_pos) rotate([0, 0, 90])
+                    Wago221_holder(2, "BATT+");
+                translate(battery_neg_pos) rotate([0, 0, 90])
+                    Wago221_holder(2, "BATT−");
+                translate(output1_pos_pos) rotate([0, 0,  90])
+                    Wago221_holder(3, "OUT1+");
+                translate(output2_pos_pos) rotate([0, 0, -90])
+                    Wago221_holder(3, "OUT2+");
+
+                translate(output1_neg_pos) rotate([0, 0, -90])
+                    Wago221_holder(2, "OUT1−");
+                translate(output2_neg_pos) rotate([0, 0,  90])
+                    Wago221_holder(2, "OUT2−");
+
+                translate(return_power_pos)   rotate([0, 0, -90])
+                    Wago221_holder(3, "RETURN");
+                translate(switched_power_pos) rotate([0, 0, -90])
+                    Wago221_holder(3, "SWPWR");
+            }
         }
-        #translate([0, 0, wall_th])
-            walls(base_w=base_w, base_h=base_h, base_depth=base_depth,
-                  base_th=base_th, wall_th=wall_th, corner_r=corner_r,
-                  nozzle_d=nozzle_d);
+        translate([0, 0, -2.5]) {
+            linear_extrude(inch(0.5), convexity=8) {
+                // Pilot holes for attaching Ridgid battery adapter plate.
+                translate([box_w, box_h/2]) {
+                    d = 2.7;  // tap size for #6
+                    dy = 51.5 / 2;
+                    translate([-19, -dy]) circle(d=d, $fs=nozzle_d/2);
+                    translate([-19,  dy]) circle(d=d, $fs=nozzle_d/2);
+                    translate([-50, -dy]) circle(d=d, $fs=nozzle_d/2);
+                    translate([-50,  dy]) circle(d=d, $fs=nozzle_d/2);
+                    translate([-108, -dy]) circle(d=d, $fs=nozzle_d/2);
+                    translate([-108,  dy]) circle(d=d, $fs=nozzle_d/2);
+                }
+            }
+        }
+        translate([0, 0, base_th]) {
+            translate(buck1_pos) rotate(buck1_rot) {
+                Tobsun_buck_pilot_holes(nozzle_d=nozzle_d);
+            }
+            translate(buck2_pos) rotate(buck2_rot) {
+                LM2596_buck_pilot_holes(nozzle_d=nozzle_d);
+            }
+        }
+    }
+    translate([inch(1/4), box_h/2, base_th/2]) {
+        translate([0, -15]) grommet(3.5, base_th, nozzle_d);
+        translate([0,  15]) grommet(3.5, base_th, nozzle_d);
     }
 
     if (Show_Tobsun_Buck && $preview) {
@@ -708,9 +699,7 @@ if (Include_Base) {
 }
 
 if (Include_Box_Walls) {
-    z = (Include_Base) ? 2.2 : 0;
-    translate([0, 0, z])
-        walls(base_th=12, base_depth=Wall_Height, corner_r=Corner_Radius, wall_th=2.2);
+    walls(base_th=12, base_depth=Wall_Height, corner_r=Corner_Radius, wall_th=2.2);
 }
 
 if (Include_Control_Panel) {
