@@ -360,7 +360,7 @@ module LM2596_buck(nozzle_d=0.4) {
         color("blue") linear_extrude(pcb_th) {
             difference() {
                 square(LM2596_buck_size(), center=true);
-                dx = 30/2; dy= 15/2;
+                dx = 30/2; dy = 16/2;
                 translate([-dx,  dy]) circle(d=3, $fs=nozzle_d/2);
                 translate([ dx, -dy]) circle(d=3, $fs=nozzle_d/2);
             }
@@ -379,7 +379,7 @@ module LM2596_buck_supports(nozzle_d=0.4) {
     font = "Liberation Sans:style=Bold";
     dia = 5.5;
     linear_extrude(3, convexity=4) {
-        dx = 30/2; dy= 15/2;
+        dx = 30/2; dy = 16/2;
         translate([-dx,  dy]) circle(d=dia, $fs=nozzle_d/2);
         translate([ dx, -dy]) circle(d=dia, $fs=nozzle_d/2);
     }
@@ -414,7 +414,7 @@ module LM2596_buck_pilot_holes(nozzle_d=0.4) {
     dia = 2.5 + nozzle_d;  // tap size for M3
     translate([0, 0, -10+3]) {
         linear_extrude(10.1, convexity=4) {
-            dx = 30/2; dy= 15/2;
+            dx = 30/2; dy = 16/2;
             translate([-dx,  dy]) circle(d=dia, $fs=nozzle_d/2);
             translate([ dx, -dy]) circle(d=dia, $fs=nozzle_d/2);
         }
