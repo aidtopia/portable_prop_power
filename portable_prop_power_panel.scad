@@ -708,12 +708,16 @@ module portable_prop_power_box(nozzle_d=0.4) {
                     translate([box_w, box_h/2]) {
                         d = 2.7;  // tap size for #6
                         dy = 51.5 / 2;
+                        // Ecarke brand hole pattern:
                         translate([-19, -dy]) circle(d=d, $fs=nozzle_d/2);
                         translate([-19,  dy]) circle(d=d, $fs=nozzle_d/2);
                         translate([-50, -dy]) circle(d=d, $fs=nozzle_d/2);
                         translate([-50,  dy]) circle(d=d, $fs=nozzle_d/2);
                         translate([-108, -dy]) circle(d=d, $fs=nozzle_d/2);
                         translate([-108,  dy]) circle(d=d, $fs=nozzle_d/2);
+                        // Anztek has the middle pair a different position:
+                        translate([-56, -dy]) circle(d=d, $fs=nozzle_d/2);
+                        translate([-56,  dy]) circle(d=d, $fs=nozzle_d/2);
                     }
                 }
             }
