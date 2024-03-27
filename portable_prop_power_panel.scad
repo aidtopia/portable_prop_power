@@ -101,14 +101,45 @@ module rounded_hole(d, th, nozzle_d=0.4) {
     }
 }
 
+module circular_hole_relief(r=undef, d=undef, max_span=3, overhang=45, layer_h=0.3) {
+    radius = is_undef(r) ? d/2 : r;
+    assert(0 < overhang && overhang < 90);
+    if (overhang > 45) {
+        echo("CAUTION: substantial overhang in circular_hole_relief.");
+    }
+    theta = 90 - overhang;
+
+    // A chord cuts across the top of the circle where the overhangs
+    // reach our limit.  This chord will be the base of the bridge.
+    chord_y = radius*sin(90-theta);
+    chord_l = radius*(cos(90-theta) - cos(90+theta));
+    chord_x0 = -chord_l/2;
+    chord_x1 =  chord_l/2;
+    delta = tan(theta) * (chord_l - max_span)/2;
+    
+    // Above the nominal top of the circle will be a horizontal span
+    // that must not be longer than max_span.
+    span_y = max(chord_y + delta, radius + layer_h);
+    dy = max(span_y - chord_y, 0);
+    dx = dy / tan(theta);
+    span_x0 = chord_x0 + dx;
+    span_x1 = chord_x1 - dx;
+    polygon([
+        [chord_x0, chord_y],
+        [span_x0, span_y],
+        [span_x1, span_y],
+        [chord_x1, chord_y]
+    ]);
+}
+
 module gland(h, thread_d=12, thread_pitch=1.5, nut_d=20, nozzle_d=0.4) {
     // Horizontal hole for a screw-in PG7 gland.  Hole is
     // teardrop shaped for printability.
-    rotate([90, 0, 0]) translate([0, 0, -h]) {
-        AT_threads(h+0.1, d=thread_d, pitch=thread_pitch, tap=true,
+    rotate([90, 0, 0]) translate([0, 0, -(h+0.1)]) {
+        AT_threads(h+0.2, d=thread_d, pitch=thread_pitch, tap=true,
                    nozzle_d=nozzle_d);
-        linear_extrude(h+0.1) scale([thread_d/2, thread_d/2])
-            polygon([ [0, 2*cos(45)], [cos(45), sin(45)], [cos(135), sin(135)] ]);
+        linear_extrude(h+0.2, convexity=8)
+            circular_hole_relief(d=thread_d);
     }
 }
 
@@ -749,7 +780,7 @@ module portable_prop_power_box(nozzle_d=0.4) {
     if (Include_Base) base();
     if (Include_Walls) {
         z = Include_Base ? lip_h : 0;
-        color("green") translate([0, 0, z]) walls();
+        translate([0, 0, z]) walls();
     }
     if (Include_Control_Panel) {
         z = (Include_Base || Include_Walls) ? lip_h + wall_h : 0;
