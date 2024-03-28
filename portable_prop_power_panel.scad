@@ -51,7 +51,7 @@
 
 Include_Base = true;
 Include_Walls = true;
-Wall_Height = 64; // [5:70]
+Wall_Height = 54; // [5:70]
 Include_Control_Panel = true;
 Show_Tobsun_Buck = true;
 Show_LM2596_Buck = true;
