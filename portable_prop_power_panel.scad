@@ -22,7 +22,7 @@
 // There's also a pushbutton so that the displays are on only when needed.
 //
 // The exact buck modules and battery adapter plate will vary based on each
-// haunters needs.  So those are attached to the "base" component, which
+// haunter's needs.  So those are attached to the "base" component, which
 // can be customized without changing the control panel.  It's currently
 // configured for a Ridgid battery adapter plate from Ecarke, a Tobsun
 // 24V to 12V DC-DC apapter capable of 10 amps, and a generic HW-411 buck
@@ -616,26 +616,18 @@ module portable_prop_power_box(nozzle_d=0.4) {
             gland(wall_th, pg7_thread_d, pg7_thread_pitch, pg7_nut_d, nozzle_d);
         }
 
-        dx = box_w/2 - corner_r;
-        dy = box_h/2 - corner_r;
-        screw_l = 10;
-        screw_d = 2.5;  // tap diameter for M3
-
+        screw_d = 2.5 + nozzle_d;  // tap diameter for M3
         difference() {
             linear_extrude(wall_h, convexity=4) {
                 difference() {
                     wall_footprint();
-                    translate([box_w/2, box_h/2]) {
-                        translate([-dx, -dy]) circle(d=screw_d, $fs=nozzle_d/2);
-                        translate([-dx,  dy]) circle(d=screw_d, $fs=nozzle_d/2);
-                        translate([ dx, -dy]) circle(d=screw_d, $fs=nozzle_d/2);
-                        translate([ dx,  dy]) circle(d=screw_d, $fs=nozzle_d/2);
-                    }
+                    corners(screw_d);
                 }
             }
-            translate([0, 0, base_th+pg7_nut_d/2+3]) {
-                translate([box_w/4, 0, 0]) pg7_gland();
-                translate([box_w/4+box_w/2, 0, 0]) pg7_gland();
+            translate([box_w/2, 0, base_th+pg7_nut_d/2+4]) {
+                dx = box_w/4 - 3;
+                translate([-dx, 0, 0]) pg7_gland();
+                translate([ dx, 0, 0]) pg7_gland();
             }
         }
     }
@@ -644,7 +636,7 @@ module portable_prop_power_box(nozzle_d=0.4) {
         buck1_size = Tobsun_buck_size();
         buck1_pos =
             [2*wall_th + buck1_size.x/2 + 13,
-             box_h - (2*wall_th + buck1_size.y/2)];
+             box_h - (wall_th + 1 + buck1_size.y/2)];
         buck1_rot = [0, 0, 180];
 
         buck2_size = LM2596_buck_size();
@@ -723,8 +715,8 @@ module portable_prop_power_box(nozzle_d=0.4) {
             // We want recesses for the heads of the screws, but they
             // face bottom-up which makes it challenging to print.  For
             // slicing sanity, we leave one vertical layer of plastic
-            // bridging the tapped portion of the hole.  It should be
-            // easy to screw threw it.
+            // bridging the tapped portion of the hole.  Just poke it
+            // out before inserting the screw.
             layer_h = 0.3;  // assumed
             translate([0, 0, -layer_h]) {
                 linear_extrude(m3_head_h, convexity=4) corners(m3_head_d);
