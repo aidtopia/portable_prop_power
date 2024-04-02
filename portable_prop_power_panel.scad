@@ -436,6 +436,8 @@ module portable_prop_power_box(nozzle_d=0.4) {
     m3_free_d = 3.4 + nozzle_d;
     m3_head_h = 2.6;
     lip_h = min(m3_head_h + panel_th, base_th-1);
+    
+    gland_dx = box_w/4 - 3;
 
     Wago2_size = Wago221_holder_size(2);
     Wago3_size = Wago221_holder_size(3);
@@ -460,6 +462,26 @@ module portable_prop_power_box(nozzle_d=0.4) {
     module support_footprint() {
         corners(d=2*corner_r);
     }
+
+    module key_footprint() {
+        module keystone(w, th) {
+            dx = w/2;
+            polygon([
+                [-dx + th/2, 0],
+                [-dx, th],
+                [ dx, th],
+                [ dx - th/2, 0]
+            ]);
+        }
+
+        // Thicken the wall around the output glands for strength and as
+        // a key so the walls mate with the base and control panel in only
+        // one way.
+        translate([box_w/2, 0]) {
+            translate([-gland_dx, 0]) keystone(pg7_nut_d, 2*wall_th);
+            translate([ gland_dx, 0]) keystone(pg7_nut_d, 2*wall_th);
+        }
+    }
     
     module wall_footprint() {
         difference() {
@@ -467,6 +489,7 @@ module portable_prop_power_box(nozzle_d=0.4) {
             offset(r=-wall_th) box_footprint();
         }
         support_footprint();
+        key_footprint();
     }
 
     module control_panel() {
@@ -544,7 +567,7 @@ module portable_prop_power_box(nozzle_d=0.4) {
              battery_neg_pos.y];
         return_power_pos   = [box_w/2 - 1, output1_meter_pos.y];
 
-        orient() {
+        orient() color("orange") {
             difference() {
                 union() {
                     panel();
@@ -613,11 +636,11 @@ module portable_prop_power_box(nozzle_d=0.4) {
 
     module walls() {
         module pg7_gland() {
-            gland(wall_th, pg7_thread_d, pg7_thread_pitch, pg7_nut_d, nozzle_d);
+            gland(2*wall_th, pg7_thread_d, pg7_thread_pitch, pg7_nut_d, nozzle_d);
         }
 
         screw_d = 2.5 + nozzle_d;  // tap diameter for M3
-        difference() {
+        color("gray") difference() {
             linear_extrude(wall_h, convexity=4) {
                 difference() {
                     wall_footprint();
@@ -625,9 +648,8 @@ module portable_prop_power_box(nozzle_d=0.4) {
                 }
             }
             translate([box_w/2, 0, base_th+pg7_nut_d/2+4]) {
-                dx = box_w/4 - 3;
-                translate([-dx, 0, 0]) pg7_gland();
-                translate([ dx, 0, 0]) pg7_gland();
+                translate([-gland_dx, 0, 0]) pg7_gland();
+                translate([ gland_dx, 0, 0]) pg7_gland();
             }
         }
     }
@@ -669,7 +691,7 @@ module portable_prop_power_box(nozzle_d=0.4) {
             [return_power_pos.x,
              return_power_pos.y - Wago3_size.x];
 
-        difference() {
+        color("orange") difference() {
             union() {
                 difference() {
                     linear_extrude(base_th) box_footprint();
